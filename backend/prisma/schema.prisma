@@ -1,3 +1,8 @@
+// StockRoom — inventory movement ledger.
+// Balances are derived: StockLevel holds the per-item/per-location quantity and
+// Movement is the append-only audit trail that produced it. Nothing is denormalised
+// onto Item, so "qty on hand" is always SUM(stockLevel.qty) for that item.
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,10 +21,14 @@ model User {
   role         Role     @default(USER)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  movements Movement[]
 }
 
 /// One value per role the stack contract declares (stacks/combos/enterprise.json auth.roles).
 /// Colossus mints one login per role; add app roles here AND to the contract, never demo users.
+/// USER is the stock clerk (record movements, read items); MANAGER/ADMIN additionally
+/// manage the catalogue and read the audit log and low-stock report.
 enum Role {
   USER
   MANAGER
@@ -40,4 +49,100 @@ model ColossusAccount {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@map("colossus_accounts")
+}
+
+/// Direction of a stock movement. IN credits `toLoc`, OUT debits `fromLoc`,
+/// TRANSFER debits `fromLoc` and credits `toLoc` in one transaction.
+enum MovementType {
+  IN
+  OUT
+  TRANSFER
+}
+
+/// A stocked article. `reorderAt` is the low-stock threshold compared against
+/// the summed StockLevel quantity (on hand <= reorderAt => low).
+model Item {
+  id          String   @id @default(cuid())
+  sku         String   @unique
+  name        String
+  description String?
+  unit        String   @default("unit")
+  reorderAt   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  stockLevels StockLevel[]
+  movements   Movement[]
+
+  @@index([name])
+}
+
+/// A physical place stock can sit. Unique per (name, zone) so "Rack 1" can exist in
+/// more than one zone without colliding.
+model Location {
+  id        String   @id @default(cuid())
+  name      String
+  zone      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stockLevels    StockLevel[]
+  movementsFrom  Movement[]   @relation("MovementFromLocation")
+  movementsTo    Movement[]   @relation("MovementToLocation")
+
+  @@unique([name, zone])
+  @@index([zone])
+}
+
+/// Current balance of one item at one location. Created on first credit and
+/// mutated only through the movements transaction (conditional decrement guards
+/// against overselling), never written directly.
+model StockLevel {
+  id         String   @id @default(cuid())
+  itemId     String
+  locationId String
+  qty        Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  item     Item     @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  location Location @relation(fields: [locationId], references: [id], onDelete: Restrict)
+
+  @@unique([itemId, locationId])
+  @@index([locationId])
+}
+
+/// Append-only audit entry: who moved what, how much, and between which locations.
+/// Restrict on every relation so an item/location/user referenced by history cannot
+/// be deleted out from under the ledger.
+model Movement {
+  id        String       @id @default(cuid())
+  type      MovementType
+  itemId    String
+  fromLocId String?
+  toLocId   String?
+  qty       Int
+  note      String?
+  userId    String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  item    Item      @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  fromLoc Location? @relation("MovementFromLocation", fields: [fromLocId], references: [id], onDelete: Restrict)
+  toLoc   Location? @relation("MovementToLocation", fields: [toLocId], references: [id], onDelete: Restrict)
+  user    User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([itemId, createdAt])
+  @@index([createdAt])
+  @@index([type])
+  @@index([userId])
+}
+
+/// Runtime override layer for service credentials/config. `resolveConfig()` reads the
+/// environment first and falls back to this table, so an admin can set a value without
+/// a redeploy.
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }
