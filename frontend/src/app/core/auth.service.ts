@@ -5,6 +5,15 @@ import { firstValueFrom } from 'rxjs';
 import { Role, User } from './models';
 import { clearStored, readStored, writeStored } from './storage';
 
+/**
+ * Build-time constant substituted by the Angular builder (`define` in
+ * angular.json): `false` for production, `true` for the `mockup` preview build.
+ * Declared locally as well as in `src/preview.d.ts` so this file type-checks
+ * under any tsconfig, including a check that does not pull the ambient file in.
+ */
+declare const COLOSSUS_PREVIEW: boolean;
+
+
 const USER_KEY = 'user';
 const TOKEN_KEY = 'token';
 

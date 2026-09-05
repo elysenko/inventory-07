@@ -19,6 +19,15 @@ import { filter, map, startWith } from 'rxjs';
 import { AuthService } from './core/auth.service';
 import { Role } from './core/models';
 
+/**
+ * Build-time constant substituted by the Angular builder (`define` in
+ * angular.json): `false` for production, `true` for the `mockup` preview build.
+ * Declared locally as well as in `src/preview.d.ts` so this file type-checks
+ * under any tsconfig, including a check that does not pull the ambient file in.
+ */
+declare const COLOSSUS_PREVIEW: boolean;
+
+
 interface NavItem {
   label: string;
   short: string;

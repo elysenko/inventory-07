@@ -5,6 +5,11 @@
 
 generator client {
   provider = "prisma-client-js"
+  // The runtime image is node:22-alpine (musl, OpenSSL 3), and pods may be
+  // amd64 or arm64. The build host is often neither, so every engine the
+  // container could need is fetched at generate time — a missing target only
+  // surfaces as a crash-on-boot in the pod, long after a green build.
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl-arm64-openssl-3.0.x", "linux-arm64-openssl-3.0.x"]
 }
 
 datasource db {
