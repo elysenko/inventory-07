@@ -1,0 +1,90 @@
+<div class="page page--narrow" data-testid="location-form-page">
+  <p class="breadcrumb">
+    <a routerLink="/locations">Locations</a> <span aria-hidden="true">/</span>
+    <span>{{ editing() ? 'Edit' : 'New location' }}</span>
+  </p>
+
+  <header class="page-head">
+    <div>
+      <h1 class="page-head__title">{{ editing() ? 'Edit location' : 'New location' }}</h1>
+      <p class="page-head__sub">Name and zone together must be unique.</p>
+    </div>
+  </header>
+
+  @if (deleteError(); as err) {
+    <p class="alert alert--error" role="alert" data-testid="location-delete-error">{{ err }}</p>
+  }
+
+  <section class="card card--pad">
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="form-grid">
+        <div class="field">
+          <label class="field__label" for="loc-name">Location name</label>
+          <input
+            id="loc-name"
+            class="input"
+            [class.input--invalid]="(name.invalid && (name.touched || submitted())) || !!nameError()"
+            type="text"
+            placeholder="e.g. Overflow Racking"
+            formControlName="name"
+            data-testid="location-name"
+          />
+          @if (nameError(); as err) {
+            <span class="field__error" data-testid="location-name-error">{{ err }}</span>
+          } @else if (name.invalid && (name.touched || submitted())) {
+            <span class="field__error">Give the location a name.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="loc-zone">Zone</label>
+          <input
+            id="loc-zone"
+            class="input"
+            [class.input--invalid]="zone.invalid && (zone.touched || submitted())"
+            type="text"
+            placeholder="e.g. Zone D"
+            formControlName="zone"
+            data-testid="location-zone"
+          />
+          @if (zone.invalid && (zone.touched || submitted())) {
+            <span class="field__error">Give the location a zone.</span>
+          }
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn--primary" type="submit" [disabled]="saving()" data-testid="location-save">
+          {{ saving() ? 'Saving…' : editing() ? 'Save changes' : 'Create location' }}
+        </button>
+        <a class="btn btn--ghost" routerLink="/locations">Cancel</a>
+      </div>
+    </form>
+  </section>
+
+  @if (editing() && auth.isManager()) {
+    <section class="card card--pad danger-zone">
+      <h2 class="card__title">Delete this location</h2>
+      <p class="muted small">
+        Locations holding stock or referenced by movements cannot be deleted.
+      </p>
+      @if (confirmingDelete()) {
+        <div class="row">
+          <button
+            type="button"
+            class="btn btn--danger"
+            (click)="confirmDelete()"
+            data-testid="location-delete-confirm"
+          >
+            Yes, delete permanently
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="cancelDelete()">Cancel</button>
+        </div>
+      } @else {
+        <button type="button" class="btn btn--danger" (click)="askDelete()" data-testid="location-delete">
+          Delete location
+        </button>
+      }
+    </section>
+  }
+</div>

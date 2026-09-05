@@ -1,0 +1,10 @@
+.page--narrow { max-width: 720px; }
+
+.service-blurb { margin: var(--space-1) 0 0; max-width: 46ch; }
+
+.field__hint code {
+  font-family: var(--font-mono);
+  background: var(--color-surface-sunken);
+  border-radius: var(--radius-sm);
+  padding: 0 4px;
+}

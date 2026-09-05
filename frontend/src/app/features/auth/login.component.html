@@ -1,0 +1,82 @@
+<div class="auth" data-testid="login-page">
+  <section class="auth__card card">
+    <header class="auth__head">
+      <span class="auth__mark" aria-hidden="true">SR</span>
+      <h1 class="auth__brand">StockRoom</h1>
+      <p class="auth__tagline">Warehouse inventory &amp; stock movement tracking</p>
+    </header>
+
+    @if (auth.error(); as err) {
+      <p class="alert alert--error" role="alert" data-testid="login-error">{{ err }}</p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="field">
+        <label class="field__label" for="login-email">Email address</label>
+        <input
+          id="login-email"
+          class="input"
+          [class.input--invalid]="email.invalid && (email.touched || submitted())"
+          type="email"
+          autocomplete="email"
+          inputmode="email"
+          placeholder="you@company.com"
+          formControlName="email"
+          data-testid="login-email"
+        />
+        @if (email.invalid && (email.touched || submitted())) {
+          <span class="field__error">Enter a valid email address.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="login-password">Password</label>
+        <input
+          id="login-password"
+          class="input"
+          [class.input--invalid]="password.invalid && (password.touched || submitted())"
+          type="password"
+          autocomplete="current-password"
+          formControlName="password"
+          data-testid="login-password"
+        />
+        @if (password.invalid && (password.touched || submitted())) {
+          <span class="field__error">Enter your password.</span>
+        }
+      </div>
+
+      <button
+        class="btn btn--primary btn--block"
+        type="submit"
+        [disabled]="auth.busy()"
+        data-testid="login-submit"
+      >
+        {{ auth.busy() ? 'Signing in…' : 'Sign in' }}
+      </button>
+    </form>
+
+    @if (previewMode) {
+      <button
+        type="button"
+        class="auth__skip"
+        (click)="skipLogin()"
+        data-testid="login-skip"
+      >
+        {{ previewShortcut }}
+      </button>
+      <p class="auth__hint">
+        Sign in with the account provisioned for you by the platform. In this
+        preview, an address containing <code>clerk</code> or <code>manager</code>
+        opens the app at that permission tier.
+      </p>
+    } @else {
+      <p class="auth__hint">
+        Use the account provisioned for you by the platform administrator.
+      </p>
+    }
+
+    <p class="auth__alt">
+      No account yet? <a routerLink="/signup" data-testid="login-to-signup">Create one</a>
+    </p>
+  </section>
+</div>

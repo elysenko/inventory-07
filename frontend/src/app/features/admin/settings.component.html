@@ -1,0 +1,75 @@
+<div class="page page--narrow" data-testid="admin-settings-page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-head__title">Admin settings</h1>
+      <p class="page-head__sub">
+        Credentials for the backing services provisioned alongside StockRoom.
+        Values set here take precedence only where no environment variable is present.
+      </p>
+    </div>
+  </header>
+
+  @if (unconfigured().length) {
+    <p class="alert alert--warn" role="status" data-testid="settings-banner">
+      The following need credentials to activate: {{ unconfiguredNames() }}
+    </p>
+  } @else {
+    <p class="alert alert--success" role="status" data-testid="settings-banner">
+      All provisioned services are configured.
+    </p>
+  }
+
+  @if (saved(); as msg) {
+    <p class="alert alert--info" role="status" data-testid="settings-saved">{{ msg }}</p>
+  }
+  @if (error(); as err) {
+    <p class="alert alert--error" role="alert" data-testid="settings-error">{{ err }}</p>
+  }
+
+  <form [formGroup]="form" class="stack">
+    @for (group of groups(); track group.service) {
+      <section class="card" [attr.data-testid]="'settings-service-' + group.service">
+        <header class="card__head">
+          <div>
+            <h2 class="card__title">{{ group.label }}</h2>
+            <p class="muted small service-blurb">{{ group.blurb }}</p>
+          </div>
+          @if (group.configured) {
+            <span class="badge badge--ok">Configured</span>
+          } @else {
+            <span class="badge badge--warn">Needs credentials</span>
+          }
+        </header>
+
+        <div class="card--pad">
+          @for (entry of group.entries; track entry.key) {
+            <div class="field">
+              <label class="field__label" [attr.for]="'setting-' + entry.key">
+                {{ entry.label }}
+              </label>
+              <input
+                [id]="'setting-' + entry.key"
+                class="input"
+                [type]="entry.secret ? 'password' : 'text'"
+                [formControlName]="entry.key"
+                [placeholder]="entry.configured ? '' : 'Not configured'"
+                [attr.data-testid]="'setting-' + entry.key"
+                autocomplete="off"
+              />
+              <span class="field__hint"><code>{{ entry.key }}</code></span>
+            </div>
+          }
+
+          <button
+            type="button"
+            class="btn btn--primary"
+            (click)="save(group.service)"
+            [attr.data-testid]="'settings-save-' + group.service"
+          >
+            Save {{ group.label }} credentials
+          </button>
+        </div>
+      </section>
+    }
+  </form>
+</div>

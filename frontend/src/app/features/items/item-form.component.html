@@ -1,0 +1,152 @@
+<div class="page page--narrow" data-testid="item-form-page">
+  <p class="breadcrumb">
+    <a routerLink="/items">Items</a> <span aria-hidden="true">/</span>
+    <span>{{ editing() ? 'Edit' : 'New item' }}</span>
+  </p>
+
+  <header class="page-head">
+    <div>
+      <h1 class="page-head__title">{{ editing() ? 'Edit item' : 'New item' }}</h1>
+      <p class="page-head__sub">
+        The reorder threshold drives the low-stock report. On-hand quantities are
+        never set here — they come from recorded movements.
+      </p>
+    </div>
+  </header>
+
+  @if (formError(); as err) {
+    <p class="alert alert--error" role="alert">{{ err }}</p>
+  }
+  @if (deleteError(); as err) {
+    <p class="alert alert--error" role="alert" data-testid="item-delete-error">{{ err }}</p>
+  }
+
+  <section class="card card--pad">
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="form-grid">
+        <div class="field">
+          <label class="field__label" for="item-sku">SKU</label>
+          <input
+            id="item-sku"
+            class="input"
+            [class.input--invalid]="(sku.invalid && (sku.touched || submitted())) || !!skuError()"
+            type="text"
+            placeholder="SKU-009"
+            formControlName="sku"
+            data-testid="item-sku"
+          />
+          @if (skuError(); as err) {
+            <span class="field__error" data-testid="item-sku-error">{{ err }}</span>
+          } @else if (sku.invalid && (sku.touched || submitted())) {
+            <span class="field__error">
+              Enter a SKU of at least 3 letters, digits or hyphens.
+            </span>
+          } @else {
+            <span class="field__hint">Must be unique across the catalogue.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="item-unit">Unit of measure</label>
+          <select id="item-unit" class="select" formControlName="unit" data-testid="item-unit">
+            @for (u of units(); track u) {
+              <option [value]="u">{{ u }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="item-name">Name</label>
+        <input
+          id="item-name"
+          class="input"
+          [class.input--invalid]="name.invalid && (name.touched || submitted())"
+          type="text"
+          placeholder="e.g. 20mm Hex Bolt, Zinc"
+          formControlName="name"
+          data-testid="item-name"
+        />
+        @if (name.invalid && (name.touched || submitted())) {
+          <span class="field__error">Give the item a name.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="item-description">Description</label>
+        <textarea
+          id="item-description"
+          class="textarea"
+          rows="3"
+          placeholder="Optional notes about specification, supplier or handling."
+          formControlName="description"
+          data-testid="item-description"
+        ></textarea>
+      </div>
+
+      <div class="field field--half">
+        <label class="field__label" for="item-reorder">Reorder threshold</label>
+        <input
+          id="item-reorder"
+          class="input"
+          [class.input--invalid]="reorderAt.invalid && (reorderAt.touched || submitted())"
+          type="number"
+          min="0"
+          inputmode="numeric"
+          formControlName="reorderAt"
+          data-testid="item-reorder"
+        />
+        <span class="field__hint">
+          The item is flagged low when on-hand falls to or below this figure.
+        </span>
+        @if (reorderAt.invalid && (reorderAt.touched || submitted())) {
+          <span class="field__error">Enter zero or a positive whole number.</span>
+        }
+      </div>
+
+      <div class="form-actions">
+        <button
+          class="btn btn--primary"
+          type="submit"
+          [disabled]="saving()"
+          data-testid="item-save"
+        >
+          {{ saving() ? 'Saving…' : editing() ? 'Save changes' : 'Create item' }}
+        </button>
+        <a class="btn btn--ghost" routerLink="/items">Cancel</a>
+      </div>
+    </form>
+  </section>
+
+  @if (editing() && auth.isManager()) {
+    <section class="card card--pad danger-zone">
+      <h2 class="card__title">Delete this item</h2>
+      <p class="muted small">
+        Items referenced by stock levels or movements cannot be deleted — the
+        audit trail must stay intact.
+      </p>
+      @if (confirmingDelete()) {
+        <div class="row">
+          <button
+            type="button"
+            class="btn btn--danger"
+            (click)="confirmDelete()"
+            data-testid="item-delete-confirm"
+          >
+            Yes, delete permanently
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="cancelDelete()">Cancel</button>
+        </div>
+      } @else {
+        <button
+          type="button"
+          class="btn btn--danger"
+          (click)="askDelete()"
+          data-testid="item-delete"
+        >
+          Delete item
+        </button>
+      }
+    </section>
+  }
+</div>

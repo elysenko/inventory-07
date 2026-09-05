@@ -1,0 +1,156 @@
+<div class="page" data-testid="items-page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-head__title">Items</h1>
+      <p class="page-head__sub">
+        On-hand quantities are derived from every location holding the item.
+      </p>
+    </div>
+    @if (auth.isManager()) {
+      <a class="btn btn--primary" routerLink="/items/new" data-testid="items-new">
+        <span aria-hidden="true">＋</span> New item
+      </a>
+    }
+  </header>
+
+  <div class="stats" data-testid="items-stats">
+    <div class="stat">
+      <p class="stat__label">Items tracked</p>
+      <p class="stat__value">{{ items().length }}</p>
+    </div>
+    <div class="stat">
+      <p class="stat__label">Units on hand</p>
+      <p class="stat__value">{{ totalUnits() }}</p>
+    </div>
+    <div class="stat">
+      <p class="stat__label">At or below reorder</p>
+      <p class="stat__value">{{ lowCount() }}</p>
+    </div>
+  </div>
+
+  <div class="toolbar card card--pad">
+    <div class="toolbar__search">
+      <label class="sr-only" for="items-search">Search items</label>
+      <input
+        id="items-search"
+        class="input"
+        type="search"
+        inputmode="search"
+        placeholder="Search by SKU or name…"
+        [value]="q()"
+        (change)="onSearch(($any($event.target)).value)"
+        data-testid="items-search"
+      />
+    </div>
+    <button
+      type="button"
+      class="btn"
+      [class.btn--primary]="lowOnly()"
+      [class.btn--ghost]="!lowOnly()"
+      (click)="toggleLowStock()"
+      [attr.aria-pressed]="lowOnly()"
+      data-testid="items-low-toggle"
+    >
+      <span aria-hidden="true">⚠</span> Low stock only
+    </button>
+    @if (filtered()) {
+      <button type="button" class="btn btn--ghost" (click)="clearFilters()" data-testid="items-clear">
+        Clear
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="card state" data-testid="items-loading">
+      <p class="state__title">Loading items…</p>
+    </div>
+  } @else if (error()) {
+    <div class="card state" data-testid="items-error">
+      <p class="state__title">Could not load items</p>
+      <p class="state__body">{{ error() }}</p>
+    </div>
+  } @else if (visible().length === 0) {
+    <div class="card state" data-testid="items-empty">
+      <p class="state__title">No items match those filters</p>
+      <p class="state__body">Try a different search term, or clear the low-stock filter.</p>
+      <button type="button" class="btn btn--ghost" (click)="clearFilters()">Clear filters</button>
+    </div>
+  } @else if (layout.isHandset()) {
+    <ul class="cards" data-testid="items-cards">
+      @for (item of visible(); track item.id) {
+        <li>
+          <a class="itemcard card" [routerLink]="['/items', item.id]">
+            <div class="itemcard__top">
+              <span class="sku">{{ item.sku }}</span>
+              @if (item.isLow) {
+                <span class="badge badge--low">Low</span>
+              } @else {
+                <span class="badge badge--ok">OK</span>
+              }
+            </div>
+            <p class="itemcard__name">{{ item.name }}</p>
+            <div class="itemcard__foot">
+              <span><strong class="tabular">{{ item.qtyOnHand }}</strong> {{ item.unit }}</span>
+              <span class="muted small">Reorder at {{ item.reorderAt }}</span>
+            </div>
+          </a>
+        </li>
+      }
+    </ul>
+  } @else {
+    <div class="card">
+      <div class="table-wrap">
+        <table class="table" data-testid="items-table">
+          <thead>
+            <tr>
+              <th scope="col">SKU</th>
+              <th scope="col">Name</th>
+              <th scope="col">Unit</th>
+              <th scope="col" class="num">Reorder at</th>
+              <th scope="col" class="num">On hand</th>
+              <th scope="col">Status</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of visible(); track item.id) {
+              <tr [attr.data-testid]="'item-row-' + item.sku">
+                <td><span class="sku">{{ item.sku }}</span></td>
+                <td>
+                  <a [routerLink]="['/items', item.id]" class="link-strong">{{ item.name }}</a>
+                </td>
+                <td class="muted">{{ item.unit }}</td>
+                <td class="num muted">{{ item.reorderAt }}</td>
+                <td class="num"><strong>{{ item.qtyOnHand }}</strong></td>
+                <td>
+                  @if (item.isLow) {
+                    <span class="badge badge--low">Low stock</span>
+                  } @else {
+                    <span class="badge badge--ok">In stock</span>
+                  }
+                </td>
+                <td class="num">
+                  <a
+                    class="btn btn--ghost btn--sm"
+                    [routerLink]="['/movements/new']"
+                    [queryParams]="{ step: 1, itemId: item.id }"
+                    >Move</a
+                  >
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <a
+    class="fab"
+    routerLink="/movements/new"
+    data-testid="items-fab-record"
+    aria-label="Record a stock movement"
+  >
+    <span aria-hidden="true">⇄</span> Record movement
+  </a>
+</div>

@@ -1,0 +1,97 @@
+<div class="page" data-testid="locations-page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-head__title">Locations</h1>
+      <p class="page-head__sub">
+        Storage zones stock can be received into, picked from, or transferred between.
+      </p>
+    </div>
+    @if (auth.isManager()) {
+      <a class="btn btn--primary" routerLink="/locations/new" data-testid="locations-new">
+        <span aria-hidden="true">＋</span> New location
+      </a>
+    }
+  </header>
+
+  <div class="stats">
+    <div class="stat">
+      <p class="stat__label">Locations</p>
+      <p class="stat__value">{{ locations().length }}</p>
+    </div>
+    <div class="stat">
+      <p class="stat__label">Units stored</p>
+      <p class="stat__value">{{ totalUnits() }}</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="card state" data-testid="locations-loading">
+      <p class="state__title">Loading locations…</p>
+    </div>
+  } @else if (error()) {
+    <div class="card state" data-testid="locations-error">
+      <p class="state__title">Could not load locations</p>
+      <p class="state__body">{{ error() }}</p>
+    </div>
+  } @else if (locations().length === 0) {
+    <div class="card state" data-testid="locations-empty">
+      <p class="state__title">No locations yet</p>
+      <p class="state__body">Add a storage location before recording any stock.</p>
+      @if (auth.isManager()) {
+        <a class="btn btn--primary" routerLink="/locations/new">Add a location</a>
+      }
+    </div>
+  } @else if (layout.isHandset()) {
+    <ul class="loc-cards" data-testid="locations-cards">
+      @for (loc of locations(); track loc.id) {
+        <li class="card loccard">
+          <div class="loccard__top">
+            <p class="loccard__name">{{ loc.name }}</p>
+            <span class="badge badge--muted">{{ loc.zone }}</span>
+          </div>
+          <p class="muted small">
+            {{ loc.itemCount }} item(s) · {{ loc.totalQty }} units
+          </p>
+          @if (auth.isManager()) {
+            <a class="btn btn--ghost btn--sm" [routerLink]="['/locations', loc.id, 'edit']">
+              Edit
+            </a>
+          }
+        </li>
+      }
+    </ul>
+  } @else {
+    <div class="card">
+      <div class="table-wrap">
+        <table class="table" data-testid="locations-table">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Zone</th>
+              <th scope="col" class="num">Distinct items</th>
+              <th scope="col" class="num">Units stored</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (loc of locations(); track loc.id) {
+              <tr [attr.data-testid]="'location-row-' + loc.id">
+                <td><strong>{{ loc.name }}</strong></td>
+                <td><span class="badge badge--muted">{{ loc.zone }}</span></td>
+                <td class="num muted">{{ loc.itemCount }}</td>
+                <td class="num">{{ loc.totalQty }}</td>
+                <td class="num">
+                  @if (auth.isManager()) {
+                    <a class="btn btn--ghost btn--sm" [routerLink]="['/locations', loc.id, 'edit']">
+                      Edit
+                    </a>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,17 @@
+.loc-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-3);
+}
+
+.loccard { padding: var(--space-4); }
+
+.loccard__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.loccard__name { margin: 0; font-weight: 650; }

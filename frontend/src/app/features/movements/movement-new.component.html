@@ -1,0 +1,188 @@
+<div class="page page--narrow" data-testid="movement-new-page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-head__title">Record a stock movement</h1>
+      <p class="page-head__sub">
+        Balances are adjusted atomically — a movement that would drive stock
+        negative is rejected in full.
+      </p>
+    </div>
+  </header>
+
+  <ol class="steps" data-testid="movement-steps">
+    <li class="step" [class.step--on]="currentStep() === 1" [class.step--done]="currentStep() > 1">
+      <span class="step__num">1</span>
+      <span class="step__label">Item &amp; type</span>
+    </li>
+    <li class="step" [class.step--on]="currentStep() === 2">
+      <span class="step__num">2</span>
+      <span class="step__label">Locations &amp; quantity</span>
+    </li>
+  </ol>
+
+  @if (success(); as msg) {
+    <p class="alert alert--success" role="status" data-testid="movement-success">{{ msg }}</p>
+  }
+
+  @if (currentStep() === 1) {
+    <section class="card card--pad" data-testid="movement-step-1">
+      <div class="field">
+        <label class="field__label" for="mv-item">Item</label>
+        <select
+          id="mv-item"
+          class="select"
+          [value]="itemId()"
+          (change)="pickItem(($any($event.target)).value)"
+          data-testid="movement-item"
+        >
+          <option value="">Select an item…</option>
+          @for (item of items(); track item.id) {
+            <option [value]="item.id">
+              {{ item.sku }} — {{ item.name }} ({{ item.qtyOnHand }} {{ item.unit }})
+            </option>
+          }
+        </select>
+        <span class="field__hint">On-hand quantities are shown for reference.</span>
+      </div>
+
+      <fieldset class="typeset">
+        <legend class="field__label">Movement type</legend>
+        <div class="typegrid">
+          @for (t of types(); track t.value) {
+            <button
+              type="button"
+              class="typecard"
+              [class.typecard--on]="type() === t.value"
+              (click)="pickType(t.value)"
+              [attr.aria-pressed]="type() === t.value"
+              [attr.data-testid]="'movement-type-' + t.value"
+            >
+              <span class="typecard__icon" aria-hidden="true">{{ t.icon }}</span>
+              <span class="typecard__label">{{ t.label }}</span>
+              <span class="typecard__blurb">{{ t.blurb }}</span>
+            </button>
+          }
+        </div>
+      </fieldset>
+
+      <div class="form-actions">
+        <button
+          type="button"
+          class="btn btn--primary"
+          [disabled]="!canContinue()"
+          (click)="goToStep(2)"
+          data-testid="movement-continue"
+        >
+          Continue
+        </button>
+        <a class="btn btn--ghost" routerLink="/items">Cancel</a>
+      </div>
+      @if (!canContinue()) {
+        <p class="muted small" style="margin-top: var(--space-3)">
+          Choose an item and a movement type to continue.
+        </p>
+      }
+    </section>
+  } @else {
+    <section class="card card--pad" data-testid="movement-step-2">
+      <div class="summary">
+        <div>
+          <span class="sku">{{ selectedItem()?.sku }}</span>
+          <p class="summary__name">{{ selectedItem()?.name }}</p>
+        </div>
+        <span [class]="badgeClass(selectedType()!)">{{ selectedType() }}</span>
+      </div>
+
+      @if (itemStock().length) {
+        <ul class="balances" data-testid="movement-balances">
+          @for (s of itemStock(); track s.locationId) {
+            <li>
+              <span>{{ s.name }} <span class="muted small">({{ s.zone }})</span></span>
+              <strong class="tabular">{{ s.qty }}</strong>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (serverError(); as err) {
+        <p class="alert alert--error" role="alert" data-testid="movement-error">{{ err }}</p>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="form-grid">
+          @if (needsFrom()) {
+            <div class="field">
+              <label class="field__label" for="mv-from">From location</label>
+              <select id="mv-from" class="select" formControlName="fromLocId" data-testid="movement-from">
+                <option value="">Select…</option>
+                @for (loc of locations(); track loc.id) {
+                  <option [value]="loc.id">
+                    {{ loc.name }} — {{ availableAt(loc.id) }} available
+                  </option>
+                }
+              </select>
+            </div>
+          }
+
+          @if (needsTo()) {
+            <div class="field">
+              <label class="field__label" for="mv-to">To location</label>
+              <select id="mv-to" class="select" formControlName="toLocId" data-testid="movement-to">
+                <option value="">Select…</option>
+                @for (loc of locations(); track loc.id) {
+                  <option [value]="loc.id">{{ loc.name }} — {{ loc.zone }}</option>
+                }
+              </select>
+            </div>
+          }
+        </div>
+
+        <div class="field field--qty">
+          <label class="field__label" for="mv-qty">Quantity ({{ selectedItem()?.unit }})</label>
+          <input
+            id="mv-qty"
+            class="input"
+            [class.input--invalid]="qty.invalid && (qty.touched || submitted())"
+            type="number"
+            min="1"
+            inputmode="numeric"
+            formControlName="qty"
+            data-testid="movement-qty"
+          />
+          @if (qty.invalid && (qty.touched || submitted())) {
+            <span class="field__error">Enter a whole quantity of at least 1.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="mv-note">Note</label>
+          <textarea
+            id="mv-note"
+            class="textarea"
+            rows="2"
+            placeholder="Optional — purchase order, works order or reason."
+            formControlName="note"
+            data-testid="movement-note"
+          ></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button
+            class="btn btn--primary"
+            type="submit"
+            [disabled]="submitting()"
+            data-testid="movement-submit"
+          >
+            {{ submitting() ? 'Recording…' : 'Record movement' }}
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="goToStep(1)" data-testid="movement-back">
+            Back
+          </button>
+          @if (selectedItem(); as it) {
+            <a class="btn btn--link" [routerLink]="['/items', it.id]">View item</a>
+          }
+        </div>
+      </form>
+    </section>
+  }
+</div>

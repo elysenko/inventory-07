@@ -1,0 +1,10 @@
+.page--narrow { max-width: 720px; }
+
+.field--half { max-width: 260px; }
+
+.danger-zone {
+  margin-top: var(--space-4);
+  border-color: var(--color-danger-border);
+}
+
+.danger-zone .card__title { color: var(--color-danger); }

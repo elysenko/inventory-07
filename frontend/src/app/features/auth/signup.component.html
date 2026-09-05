@@ -1,0 +1,96 @@
+<div class="auth" data-testid="signup-page">
+  <section class="auth__card card">
+    <header class="auth__head">
+      <span class="auth__mark" aria-hidden="true">SR</span>
+      <h1 class="auth__brand">StockRoom</h1>
+      <p class="auth__tagline">Create your account — new accounts start as clerks</p>
+    </header>
+
+    @if (auth.error(); as err) {
+      <p class="alert alert--error" role="alert" data-testid="signup-error">{{ err }}</p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="field">
+        <label class="field__label" for="signup-name">Full name</label>
+        <input
+          id="signup-name"
+          class="input"
+          [class.input--invalid]="name.invalid && (name.touched || submitted())"
+          type="text"
+          autocomplete="name"
+          placeholder="Alex Morgan"
+          formControlName="name"
+          data-testid="signup-name"
+        />
+        @if (name.invalid && (name.touched || submitted())) {
+          <span class="field__error">Enter your name.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="signup-email">Email address</label>
+        <input
+          id="signup-email"
+          class="input"
+          [class.input--invalid]="email.invalid && (email.touched || submitted())"
+          type="email"
+          autocomplete="email"
+          inputmode="email"
+          placeholder="you@company.com"
+          formControlName="email"
+          data-testid="signup-email"
+        />
+        @if (email.invalid && (email.touched || submitted())) {
+          <span class="field__error">Enter a valid email address.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="signup-password">Password</label>
+        <input
+          id="signup-password"
+          class="input"
+          [class.input--invalid]="password.invalid && (password.touched || submitted())"
+          type="password"
+          autocomplete="new-password"
+          formControlName="password"
+          data-testid="signup-password"
+        />
+        <span class="field__hint">At least 8 characters.</span>
+        @if (password.invalid && (password.touched || submitted())) {
+          <span class="field__error">Choose a password of at least 8 characters.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="signup-confirm">Confirm password</label>
+        <input
+          id="signup-confirm"
+          class="input"
+          [class.input--invalid]="form.hasError('mismatch') && confirm.touched"
+          type="password"
+          autocomplete="new-password"
+          formControlName="confirm"
+          data-testid="signup-confirm"
+        />
+        @if (form.hasError('mismatch') && (confirm.touched || submitted())) {
+          <span class="field__error">Passwords do not match.</span>
+        }
+      </div>
+
+      <button
+        class="btn btn--primary btn--block"
+        type="submit"
+        [disabled]="auth.busy()"
+        data-testid="signup-submit"
+      >
+        {{ auth.busy() ? 'Creating account…' : 'Create account' }}
+      </button>
+    </form>
+
+    <p class="auth__alt">
+      Already registered? <a routerLink="/login" data-testid="signup-to-login">Sign in</a>
+    </p>
+  </section>
+</div>

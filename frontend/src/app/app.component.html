@@ -1,0 +1,124 @@
+<!-- data-testid="app-ready" is the universal readiness landmark: it enters the DOM
+     only after Angular bootstraps this root component, so the render gate can wait
+     on it to confirm the SPA hydrated (not a blank shell / 404 / failed bundle). -->
+<div class="shell" data-testid="app-ready" [class.shell--bare]="!showChrome()">
+  @if (showChrome()) {
+    <header class="topbar">
+      @if (isHandset()) {
+        <button
+          type="button"
+          class="icon-btn"
+          data-testid="nav-drawer-toggle"
+          [attr.aria-expanded]="drawerOpen()"
+          aria-label="Open navigation menu"
+          (click)="toggleDrawer()"
+        >
+          <span aria-hidden="true">☰</span>
+        </button>
+      }
+
+      <a class="brand" routerLink="/items" (click)="closeDrawer()">
+        <span class="brand__mark" aria-hidden="true">SR</span>
+        <span class="brand__name">StockRoom</span>
+      </a>
+
+      <span class="spacer"></span>
+
+      <div class="user">
+        <button
+          type="button"
+          class="user__chip"
+          data-testid="user-menu-toggle"
+          [attr.aria-expanded]="menuOpen()"
+          (click)="toggleMenu()"
+        >
+          <span class="user__avatar" aria-hidden="true">{{ initials() }}</span>
+          <span class="user__meta">
+            <span class="user__email">{{ auth.user()?.email }}</span>
+            <span class="user__role">{{ roleLabel() }}</span>
+          </span>
+          <span class="user__caret" aria-hidden="true">▾</span>
+        </button>
+
+        @if (menuOpen()) {
+          <div class="menu" data-testid="user-menu">
+            <p class="menu__head">{{ auth.user()?.name || auth.user()?.email }}</p>
+            @if (previewMode) {
+              <p class="menu__label">Viewing as</p>
+              @for (r of previewRoles; track r.role) {
+                <button
+                  type="button"
+                  class="menu__item"
+                  [class.menu__item--on]="roleLabel() === r.label"
+                  (click)="switchRole(r.role)"
+                >
+                  {{ r.label }}
+                </button>
+              }
+              <hr class="menu__rule" />
+            }
+            <button
+              type="button"
+              class="menu__item menu__item--danger"
+              data-testid="logout-button"
+              (click)="logout()"
+            >
+              Sign out
+            </button>
+          </div>
+        }
+      </div>
+    </header>
+  }
+
+  <div class="body">
+    @if (showChrome() && !isHandset()) {
+      <nav class="sidebar" aria-label="Main navigation">
+        @for (item of navItems(); track item.path) {
+          <a
+            class="sidenav"
+            [routerLink]="item.path"
+            routerLinkActive="sidenav--active"
+            [routerLinkActiveOptions]="{ exact: item.path === '/movements' }"
+          >
+            <span class="sidenav__icon" aria-hidden="true">{{ item.icon }}</span>
+            <span>{{ item.label }}</span>
+          </a>
+        }
+      </nav>
+    }
+
+    <main class="content" [class.content--bare]="!showChrome()">
+      <router-outlet />
+    </main>
+  </div>
+
+  @if (showChrome() && isHandset() && drawerOpen()) {
+    <div class="scrim" (click)="closeDrawer()" aria-hidden="true"></div>
+    <nav class="drawer" data-testid="mobile-drawer" aria-label="Main navigation">
+      <div class="drawer__head">
+        <span class="drawer__title">Menu</span>
+        <button type="button" class="icon-btn" aria-label="Close menu" (click)="closeDrawer()">
+          <span aria-hidden="true">✕</span>
+        </button>
+      </div>
+      @for (item of navItems(); track item.path) {
+        <a
+          class="sidenav"
+          [routerLink]="item.path"
+          routerLinkActive="sidenav--active"
+          [routerLinkActiveOptions]="{ exact: item.path === '/movements' }"
+          (click)="closeDrawer()"
+        >
+          <span class="sidenav__icon" aria-hidden="true">{{ item.icon }}</span>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+      <div class="drawer__foot">
+        <button type="button" class="btn btn--ghost btn--block" (click)="logout()">
+          Sign out
+        </button>
+      </div>
+    </nav>
+  }
+</div>

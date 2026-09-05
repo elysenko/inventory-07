@@ -1,0 +1,105 @@
+<div class="page" data-testid="low-stock-page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-head__title">Low stock</h1>
+      <p class="page-head__sub">
+        Every item whose total on-hand quantity has fallen to or below its
+        reorder threshold, worst deficit first.
+      </p>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat">
+      <p class="stat__label">Items below threshold</p>
+      <p class="stat__value">{{ rows().length }}</p>
+    </div>
+    <div class="stat">
+      <p class="stat__label">Total deficit</p>
+      <p class="stat__value">{{ totalDeficit() }}</p>
+    </div>
+    <div class="stat">
+      <p class="stat__label">Out of stock</p>
+      <p class="stat__value">{{ critical() }}</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="card state" data-testid="low-stock-loading">
+      <p class="state__title">Building the report…</p>
+    </div>
+  } @else if (error()) {
+    <div class="card state" data-testid="low-stock-error">
+      <p class="state__title">Could not build the report</p>
+      <p class="state__body">{{ error() }}</p>
+    </div>
+  } @else if (rows().length === 0) {
+    <div class="card state" data-testid="low-stock-empty">
+      <p class="state__title">Everything is above its reorder threshold</p>
+      <p class="state__body">Nothing needs replenishing right now.</p>
+      <a class="btn btn--ghost" routerLink="/items">Back to items</a>
+    </div>
+  } @else if (layout.isHandset()) {
+    <ul class="low-cards" data-testid="low-stock-cards">
+      @for (row of rows(); track row.itemId) {
+        <li class="card lowcard">
+          <div class="lowcard__top">
+            <span class="sku">{{ row.sku }}</span>
+            <span class="badge badge--low">−{{ row.deficit }}</span>
+          </div>
+          <p class="lowcard__name">{{ row.name }}</p>
+          <p class="muted small">
+            {{ row.onHand }} of {{ row.reorderAt }} {{ row.unit }} on hand
+          </p>
+          <a
+            class="btn btn--primary btn--sm"
+            routerLink="/movements/new"
+            [queryParams]="{ step: 2, itemId: row.itemId, type: 'IN' }"
+            >Replenish</a
+          >
+        </li>
+      }
+    </ul>
+  } @else {
+    <div class="card">
+      <div class="table-wrap">
+        <table class="table" data-testid="low-stock-table">
+          <thead>
+            <tr>
+              <th scope="col">SKU</th>
+              <th scope="col">Name</th>
+              <th scope="col" class="num">On hand</th>
+              <th scope="col" class="num">Reorder at</th>
+              <th scope="col" class="num">Deficit</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.itemId) {
+              <tr [attr.data-testid]="'low-stock-row-' + row.sku">
+                <td><span class="sku">{{ row.sku }}</span></td>
+                <td>
+                  <a [routerLink]="['/items', row.itemId]" class="link-strong">{{ row.name }}</a>
+                </td>
+                <td class="num"><strong>{{ row.onHand }}</strong> <span class="muted">{{ row.unit }}</span></td>
+                <td class="num muted">{{ row.reorderAt }}</td>
+                <td class="num">
+                  <span class="badge badge--low">{{ row.deficit }}</span>
+                </td>
+                <td class="num">
+                  <a
+                    class="btn btn--primary btn--sm"
+                    routerLink="/movements/new"
+                    [queryParams]="{ step: 2, itemId: row.itemId, type: 'IN' }"
+                    [attr.data-testid]="'low-stock-replenish-' + row.sku"
+                    >Replenish</a
+                  >
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
